@@ -1,5 +1,5 @@
-# srcfinder
-Tools & utilities for Methane SourceFinder AVIRIS-NG image processing/product generation.
+# Methane SourceFinder
+Tools & utilities for AVIRIS-NG image processing/product generation for Methane SourceFinder.
 
 ## Usage
 
