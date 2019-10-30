@@ -1,7 +1,8 @@
 # srcfinder
 Tools & utilities for Methane SourceFinder AVIRIS-NG image processing/product generation.
 
-*Usage*
+Usage:
+
 ```
 robust_mf.py [-h] [-v] [-k KMODES] [-r] [-f] [--rgb_bands RGB_BANDS] [-m] [-R] [-M MODEL] INPUT LIBRARY OUTPUT
 
@@ -28,11 +29,13 @@ optional arguments:
                         background covariance model (looshrinkage (default)|empirical)
 ```
 
-*CH4 Spectral Library*
+CH4 Spectral Library:
+
 ang_ch4_unit_3col_425chan.txt: lab measured CH4 transmittance spectrum with columns 
 ```
 [channel index] [wavelength] [CH4 transmittance]
 ```
 
-*References*
+Reference:
+
 J. Theiler, “The incredible shrinking covariance estimator,” SPIE Defense, 2012.
