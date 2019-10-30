@@ -1,7 +1,7 @@
 # srcfinder
 Tools & utilities for Methane SourceFinder AVIRIS-NG image processing/product generation.
 
-Usage:
+## Usage
 
 ```
 robust_mf.py [-h] [-v] [-k KMODES] [-r] [-f] [--rgb_bands RGB_BANDS] [-m] [-R] [-M MODEL] INPUT LIBRARY OUTPUT
@@ -29,14 +29,14 @@ optional arguments:
                         background covariance model (looshrinkage (default)|empirical)
 ```
 
-CH4 Spectral Library:
+## CH4 Spectral Library
 
 ang_ch4_unit_3col_425chan.txt: lab measured CH4 transmittance spectrum with columns 
 ```
 [channel index] [wavelength] [CH4 transmittance]
 ```
 
-References:
+## References
 - C. Frankenberg, A. K. Thorpe, D. R. Thompson, G. Hulley, E. A. Kort, N. Vance, J. Borchardt, T. Krings, K. Gerilowski, C. Sweeney, S. Conley, B. D. Bue, A. D. Aubrey, S. Hook, and R. O. Green, “Airborne methane remote measurements reveal heavy-tail flux distribution in Four Corners region,” Proceedings of the National Academy of Sciences, 2016.
 - D. R. Thompson, I. Leifer, H. Bovensmann, M. Eastwood, M. Fladeland, C. Frankenberg, K. Gerilowski, R. O. Green, S. Kratwurst, T. Krings, B. Luna, and A. K. Thorpe, “Real time remote detection and measurement for airborne imaging spectroscopy: a case study with methane,” Atmospheric Measurement Techniques, 2015.
 - J. Theiler, “The incredible shrinking covariance estimator,” SPIE Defense, 2012.
