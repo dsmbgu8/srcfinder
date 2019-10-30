@@ -29,7 +29,7 @@ optional arguments:
                         background covariance model (looshrinkage (default)|empirical)
 ```
 
-## CH4 Spectral Library
+## Methane Spectral Library
 
 ang_ch4_unit_3col_425chan.txt: lab measured CH4 transmittance spectrum with columns 
 ```
