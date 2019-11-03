@@ -19,11 +19,12 @@ warn = warnings.warn
 from spectral.io.envi import open as envi_open_file
 from spectral.io.envi import create_image as envi_create_image
 
+import time
 from os import makedirs
 from os.path import join as pathjoin, exists as pathexists
 from numpy import pi, array, arange, diag, mean, median, zeros, ones 
 from numpy import all, any, isfinite, argmin, log, loadtxt
-from numpy import uint8,uint16,float32,float64
+from numpy import uint8,int16,float32,float64
 from numpy import matrix,unique,isfinite,inf,where
 from numpy import logical_and
 from scipy.linalg import LinAlgError
@@ -31,10 +32,10 @@ from scipy.linalg import LinAlgError
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import PCA
 
-
+gettime = time.time
+    
 modelname='looshrinkage' # 'empirical' 
 
-ncalrows = 200
 ppmscaling = 100000.0
 
 def randperm(*args):
@@ -139,12 +140,10 @@ def looshrinkage(I_zm,alphas,nll,n,I_reg=[]):
 if __name__ == '__main__':
     import argparse
 
-
-
     parser = argparse.ArgumentParser(description="Robust MF")
     parser.add_argument('-v', '--verbose', action='store_true', 
                         help='verbose output')    
-    parser.add_argument('-k', '--kmodes', type=int, default=1,
+    parser.add_argument('-k', '--kmeans', type=int, default=1,
                         help='number of columnwise modes (k-means clusters)')
     parser.add_argument('-r', '--reject', action='store_true',
                         help='enable multimodal covariance outlier rejection')
@@ -166,7 +165,7 @@ if __name__ == '__main__':
                         help='path for output image (mf ch4 ppm)')    
     
     args = parser.parse_args()
-    bgmodes = args.kmodes
+    bgmodes = args.kmeans
     reject = args.reject
     regfull = args.full
     reflectance = args.reflectance
@@ -263,22 +262,30 @@ if __name__ == '__main__':
     outimg_mm[:,:,-1] = nodata
     
     if savebgmeta:
-        # output image of bgster membership labels per column
-        bgfile=outfile+'_bg'
+        # output image of bg cluster membership labels per column
+        bgfile=outfile+'_bgmeta'
         bgfilehdr=bgfile+'.hdr'
         bgmeta = outmeta
         bgmeta['bands'] = 2
-        bgmeta['data type'] = np2envitype(uint16)
+        bgmeta['data type'] = np2envitype(int16)
         bgmeta['num alphas'] = len(alphas)
         bgmeta['alphas'] = '{%s}'%(str(alphas)[1:-1])
-        bgmeta['band names'] = '{cluster_count, alpha_index}'
+        bgmeta['band names'] = '{cluster_id, alpha_index}'
         bgimg = envi_create_image(bgfilehdr,bgmeta,force=True,ext='')
         bgimg_mm = bgimg.open_memmap(interleave='source',writable=True)
 
     # exclude nonfinite + negative spectra in covariance estimates
     useidx = lambda Icol: where(((~(Icol<0)) & isfinite(Icol)).all(axis=1))[0]
 
+    # if len(rgb_bands)==3:
+    #     print('copying rgb bands to outfile')
+    #     stime = gettime()
+    #     for oi,bi in enumerate(rgb_bands):
+    #         outimg_mm[:,:,oi] = img_mm[:,bi,:]
+    #     print('done (elapsed time=%ds)'%(gettime()-stime))
+        
     print('starting columnwise processing (%d columns)'%ncols)
+    stime = gettime()        
     for col in arange(ncols):
         Icol_full=img_mm[:,active[0]-1:active[1],col]
         use = useidx(Icol_full)
@@ -308,9 +315,8 @@ if __name__ == '__main__':
                     bglabels[lmask] = -l
                     bgulab[i] = -l                                    
                 bgcounts.append("%d: %d"%(l,bgulabn[i]))
-
                 if savebgmeta:
-                    bgimg_mm[use[lmask],col,0] = bgulabn[i]
+                    bgimg_mm[use[lmask],col,0] = bgulab[i]
 
             print('bg cluster counts:',', '.join(bgcounts))
             if (bgulab<0).all():
@@ -342,7 +348,7 @@ if __name__ == '__main__':
                                                      nuse,I_reg=Icol_reg)
                 
             try:                            
-                Icol_sub = Icol_sub-mu
+                Icol_sub = Icol_sub-mu # = subsampled column mode
 
                 Icol_model = modelfit(Icol_sub)
                 if modelname=='looshrinkage':
@@ -375,10 +381,10 @@ if __name__ == '__main__':
         colmu = outimg_mm[use[bglabels>=0],col,-1].mean()
         print('Column %i mean: %e'%(col,colmu))
 
-    if len(rgb_bands)==3:
-        print('copying rgb bands to outfile')    
-        outimg_mm[:,:,0] = img_mm[:,rgb_bands[0],:]
-        outimg_mm[:,:,1] = img_mm[:,rgb_bands[1],:]
-        outimg_mm[:,:,2] = img_mm[:,rgb_bands[2],:]
+        # copy rgb bands to outfile        
+        outimg_mm[:,col,0] = img_mm[:,rgb_bands[0],col]
+        outimg_mm[:,col,1] = img_mm[:,rgb_bands[1],col]
+        outimg_mm[:,col,2] = img_mm[:,rgb_bands[2],col]
+                                
 
-    print('done')
+    print('done (elapsed time=%ds)'%(gettime()-stime))
