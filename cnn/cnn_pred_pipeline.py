@@ -169,7 +169,7 @@ if __name__ == "__main__":
     dataset = rasterio.open(args.flightline)
     array = dataset.read(4)
 
-    allpred = np.array(allpred).reshape(display_x.shape)
+    allpred = np.array(allpred).reshape(array.shape)
     allpred[array == -9999] = -9999
 
     with rasterio.Env():
@@ -181,7 +181,7 @@ if __name__ == "__main__":
             compress='lzw'
         )
 
-        with rasterio.open(f"{args.flightline}_saliency.img", 'w', **profile) as dst:
+        with rasterio.open(op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"), 'w', **profile) as dst:
             dst.write(allpred.astype(rasterio.float32), 1)
 
     print("Done!")
