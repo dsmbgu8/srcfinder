@@ -32,6 +32,8 @@ from scipy.linalg import LinAlgError
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import PCA
 
+import pandas as pd
+
 gettime = time.time
     
 modelname='looshrinkage' # 'empirical' 
@@ -145,6 +147,8 @@ if __name__ == '__main__':
                         help='verbose output')    
     parser.add_argument('-k', '--kmeans', type=int, default=1,
                         help='number of columnwise modes (k-means clusters)')
+    parser.add_argument('--pcadim', type=int, default=6,
+                        help='number of PCA dims (for k-means clusters>1)')
     parser.add_argument('-r', '--reject', action='store_true',
                         help='enable multimodal covariance outlier rejection')
     parser.add_argument('-f', '--full', action='store_true', 
@@ -171,12 +175,15 @@ if __name__ == '__main__':
     reflectance = args.reflectance
     savebgmeta = args.metadata
     modelname = args.model
-    pcadim = 6
+    pcadim = args.pcadim
     
     infile = args.input
     infilehdr = infile+'.hdr'
     outfile = args.output 
     outfilehdr = outfile+'.hdr'
+
+    # csv output file for colunnwise mean/stddev
+    colcsv = os.path.splitext(infile)[0]+'_column_stats.csv'
 
     # define active channels (AVIRIS-NG clipped radiances) wrt target gas + measurement units
     if reflectance and 'ch4' in args.library:
@@ -285,7 +292,11 @@ if __name__ == '__main__':
     #     print('done (elapsed time=%ds)'%(gettime()-stime))
         
     print('starting columnwise processing (%d columns)'%ncols)
-    stime = gettime()        
+    stime = gettime()
+    colavg = np.ones(ncols)*nodata
+    colstd = np.ones(ncols)*nodata
+    colnum = np.ones(ncols)*nodata
+    
     for col in arange(ncols):
         Icol_full=img_mm[:,active[0]-1:active[1],col]
         use = useidx(Icol_full)
@@ -349,7 +360,6 @@ if __name__ == '__main__':
                 
             try:                            
                 Icol_sub = Icol_sub-mu # = subsampled column mode
-
                 Icol_model = modelfit(Icol_sub)
                 if modelname=='looshrinkage':
                     C,alphaidx = Icol_model
@@ -378,13 +388,21 @@ if __name__ == '__main__':
             else:
                 outimg_mm[use[kmask],col,-1] = mf*ppmscaling
 
-        colmu = outimg_mm[use[bglabels>=0],col,-1].mean()
-        print('Column %i mean: %e'%(col,colmu))
+        colpix = outimg_mm[use[bglabels>=0],col,-1]
+        colnum[col] = nuse
+        colavg[col] = np.mean(colpix)
+        colstd[col] = np.std(colpix)
+        print('Column %i mean: %e, std: %e'%(col,colavg[col],colstd[col]))
 
         # copy rgb bands to outfile        
         outimg_mm[:,col,0] = img_mm[:,rgb_bands[0],col]
         outimg_mm[:,col,1] = img_mm[:,rgb_bands[1],col]
         outimg_mm[:,col,2] = img_mm[:,rgb_bands[2],col]
-                                
 
+    # write column stats
+    print('Saving column stats to',colcsv)
+    coldf = pd.DataFrame(np.r_[colnum,colavg,colstd],
+                         index=['npix','avg','std'])
+    coldf.to_csv(colcsv)
+    
     print('done (elapsed time=%ds)'%(gettime()-stime))
