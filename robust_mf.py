@@ -336,7 +336,7 @@ if __name__ == '__main__':
                 
         else: # bgmodes==1
             bglabels = ones(nuse)
-            bgulab = np.array([1])
+            bgulab = array([1])
 
         # operate independently on each columnwise partition
         for ki in bgulab:
