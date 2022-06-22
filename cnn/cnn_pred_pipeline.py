@@ -111,6 +111,7 @@ if __name__ == "__main__":
     
     if len(args.gpus) > 1:
         # Multi-GPU
+        model = model.to(device)
         model = nn.DataParallel(model, device_ids=args.gpus)
     else:
         # Single-GPU or CPU
@@ -156,6 +157,8 @@ if __name__ == "__main__":
         num_workers=8
     )
 
+    print("[STEP] MODEL PREDICTION")
+
     # Run shift predictions
     allpred = []
     for batch in tqdm(dataloader, desc="Predicting shifts"):
@@ -166,6 +169,7 @@ if __name__ == "__main__":
             allpred += [x[1] for x in preds.cpu().detach().numpy()]
 
     # Save
+    print("[STEP] RESULT EXPORT")
     dataset = rasterio.open(args.flightline)
     array = dataset.read(4)
 
@@ -181,6 +185,7 @@ if __name__ == "__main__":
             compress='lzw'
         )
 
+        print(f"[INFO] Saving to", op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"))
         with rasterio.open(op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"), 'w', **profile) as dst:
             dst.write(allpred.astype(rasterio.float32), 1)
 

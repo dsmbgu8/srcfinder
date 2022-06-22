@@ -1,0 +1,22 @@
+ENVI
+description = {
+  AVIRIS-NG Measured Radiances in uW nm-1 cm-2 sr-1}
+samples = 669
+lines = 2801
+bands = 4
+header offset = 0
+file type = ENVI
+data type = 5
+interleave = bip
+byte order = 0
+map info = {UTM, 1, 1, 272247.152557, 3992010.65018, 3.1, 3.1, 11, North, WGS-84, units=Meters, rotation=17.0000000}
+crosstrack scatter file = /home/jchapman/src/isat/ang/cal/data/20170125_via_ang20160925t182412_crf
+flat field file = /home/jchapman/src/isat/ang/cal/data/20180727_ang20180628_BLUSS_avg_rows300-340_ff
+band names = { Red Radiance (uW/nm/sr/cm2) , Green Radiance (uW/nm/sr/cm2) , Blue Radiance (uW/nm/sr/cm2) , CH4 Absorption (ppm x m) }
+spectral scatter file = /home/jchapman/src/isat/ang/cal/data/20170125_via_ang20160925t182412_srf
+wavelength file = /home/jchapman/src/isat/ang/cal/data/20190111_ang20180325t061759_wavelength_fit_full.txt
+radiance version = v2.0
+rcc file = /home/jchapman/src/isat/ang/cal/data/20180727_ang20180628_avg_rows300-340_UVCorr2.rcc
+model parameters = { modelname=looshrinkage , bgmodel=unimodal , aminexp=-10.0 , amaxexp=0.0 , astep=0.05 , reflectance=False , active_bands=[351 , 422] }
+bad pixel map = /home/jchapman/src/isat/ang/cal/data/ANGv5_bad
+data ignore value = -9999
