@@ -1,0 +1,32 @@
+Reading:  COVID_systematics.txt
+
+***COVID RAW STATISTICS***
+       Total Files = 280
+    No Systematics = 120
+ Maybe Systematics = 13
+  Weak Systematics = 83
+Strong Systematics = 64
+*************************
+
+Number of Files:  280
+
+***STRICT COVID TEST STATISTICS***
+No Systematics (True Positive) = 98
+No Systematics (False Positive) = 22
+Any Systematics (False Positive) = 31
+Any Systematics (True Positive) = 129
+
+***LOOSE (INCLUDING MAYBES) COVID TEST STATISTICS***
+No Systematics (True Positive) = 106
+No Systematics (False Positive) = 27
+Any Systematics (False Positive) = 23
+Any Systematics (True Positive) = 124
+
+******
+Strong Systematics (True Positive) = 59
+Weak Systematics (True Positive) = 65
+Maybe Systematics (True Positive) = 8
+
+
+Successful Completion
+
