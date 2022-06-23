@@ -1,0 +1,11 @@
+{
+    "qc_users":["bbue","andrew","dcusworth","alana","ralph","david","pavel","jake","mgaray"],
+    "cmf_year":"2020",
+    "cmf_types":["cmf","ch4mf"],
+    "cmf_res":"native",
+    "plume_list":"AVng_2020_COVID_ch4mf_plumes_cnn_manual_id_20201203.xlsx",
+    "lidqc_template":"AVng_2020_COVID_ch4mf_plumes_cnn_manual_id_20201203_flightlines.xlsx",
+    "lab_path":"../covid/AVng_2020_COVID_ch4mf_plumes_cnn_manual_id_20201203_coords2cmflab/"
+    "plume_sheets":["cnn_TP_FP","manual_id"]
+}
+

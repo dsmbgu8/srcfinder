@@ -1,0 +1,8 @@
+{
+    "ESRI Imagery":"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{Z}/{Y}/{X}.jpg",
+    "Digital Globe":"https://mt1.google.com/vt/lyrs=s&x={X}&y={Y}&z={Z}",
+    "OpenStreetMap":"https://c.tile.openstreetmap.org/{Z}/{X}/{Y}.png",
+    "Google Maps":"https://mt1.google.com/vt/x={X}&y={Y}&z={Z}",
+    "Virtual Earth":"http://ecn.t3.tiles.virtualearth.net/tiles/a{Q}.jpeg?g=1",
+    "SentinelHub":"https://services.sentinel-hub.com/ogc/wmts/{Q}"
+}
