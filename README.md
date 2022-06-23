@@ -7,4 +7,4 @@ Tools & utilities for AVIRIS-NG image processing/product generation for Methane 
 - `cmf`: Columnwise Matched Filter (CMF) code + example methane spectrum
 - `cnn`: Methane plume detection Convolutional Neural Network (CNN) models + code
 - `triage`: CMF data triage models + code
-
+- `cmftagger`: holoviews CMF viewer / QC app code
