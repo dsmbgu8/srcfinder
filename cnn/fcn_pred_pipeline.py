@@ -122,22 +122,22 @@ if __name__ == "__main__":
     model = googlenet(pretrained=False, num_classes=2, init_weights=False)
     model.load_state_dict(torch.load(weightpath))
     
-    if len(args.gpus) > 1:
-        # Multi-GPU
-        model = model.to(device)
-        model = nn.DataParallel(model, device_ids=args.gpus)
-    else:
-        # Single-GPU or CPU
-        model = model.to(device)
-    
-    model.eval()
-
     # FCN model setup
     print("[INFO] Converting CNN to FCN.")
     fcn = nn.Sequential(*list(model.children())[:-5]).to(device)
     fcn.add_module('final_conv', nn.Conv2d(1024, 2, kernel_size=1).to(device))
     fcn.final_conv.weight.data.copy_(model.fc.weight.data[:,:,None,None])
     fcn.final_conv.bias.data.copy_(model.fc.bias.data)
+
+    if len(args.gpus) > 1:
+        # Multi-GPU
+        fcn = fcn.to(device)
+        fcn = nn.DataParallel(fcn, device_ids=args.gpus)
+    else:
+        # Single-GPU or CPU
+        fcn = fcn.to(device)
+    
+    fcn.eval()
 
     print("[INFO] Initializing Dataloader.")
     # Transform and dataloader
