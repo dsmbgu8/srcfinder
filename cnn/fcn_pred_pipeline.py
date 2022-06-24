@@ -14,7 +14,7 @@ from torch.nn import functional as F
 from torchvision import transforms
 
 import rasterio
-from archs.googlenet import googlenet
+from archs.googlenet1 import googlenet
 
 class ClampCH4(object):
     """ Preprocessing step for the methane layer """
@@ -72,49 +72,116 @@ def stitch_stack(fl_shape, predstack, scale=32):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert a CNN to an FCN for flightline predictions.")
-    parser.add_argument('flightline',       help="Filepath to flightline img")
+    parser = argparse.ArgumentParser(
+        description="Generate a flightline saliency map with a FCN."
+    )
+
+    parser.add_argument('flightline',       help="Filepaths to flightline ENVI IMG.",
+                                            type=str)
+    parser.add_argument('--model', '-m',    help="Model to use for prediction.",
+                                            default="COVID_QC",
+                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC"])
+    parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
+                                            nargs='+',
+                                            default=[-1],
+                                            type=int)
+    parser.add_argument('--batch', '-b',    help="Batch size per device.",
+                                            default=32,
+                                            type=int)
+    parser.add_argument('--output', '-o',   help="Output directory for generated saliency maps.",
+                                            default=".",
+                                            type=str)
+
     args = parser.parse_args()
 
+
     # Initial model setup/loading
-    print("Loading CNN model...")
-    device = torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu")
-    model = googlenet(pretrained=False, num_classes=2, init_weights=True).to(device)
-    weights = "/scratch/jakelee/ch4/results/20220110_232225_814587_COVID_QC_augB/weights/29_20220110_232225_814587_COVID_QC_augB_weights.pt"
-    model.load_state_dict(torch.load(weights))
+    print("[STEP] MODEL INITIALIZATION")
+
+    print("[INFO] Finding model weightpath.")
+    weightpath = op.join(Path(__file__).parent.resolve(), 'models', f"{args.model}.pt")
+    if op.isfile(weightpath):
+        print(f"[INFO] Found {weightpath}.")
+    else:
+        print(f"[INFO] Model not found at {weightpath}, exiting.")
+        sys.exit(1)
+
+    print("[INFO] Initializing pytorch device.")
+    if args.gpus == [-1]:
+        # CPU
+        device = torch.device('cpu')
+    else:
+        if not torch.cuda.is_available():
+            print("[ERR] CUDA not found, exiting.")
+            sys.exit(1)
+        
+        # Set first device
+        device = torch.device(f"cuda:{args.gpus[0]}")
+
+    print("[INFO] Loading model.")
+    model = googlenet(pretrained=False, num_classes=2, init_weights=False)
+    model.load_state_dict(torch.load(weightpath))
+    
+    if len(args.gpus) > 1:
+        # Multi-GPU
+        model = model.to(device)
+        model = nn.DataParallel(model, device_ids=args.gpus)
+    else:
+        # Single-GPU or CPU
+        model = model.to(device)
+    
     model.eval()
 
     # FCN model setup
-    print("Converting CNN to FCN...")
+    print("[INFO] Converting CNN to FCN.")
     fcn = nn.Sequential(*list(model.children())[:-5]).to(device)
     fcn.add_module('final_conv', nn.Conv2d(1024, 2, kernel_size=1).to(device))
     fcn.final_conv.weight.data.copy_(model.fc.weight.data[:,:,None,None])
     fcn.final_conv.bias.data.copy_(model.fc.bias.data)
 
+    print("[INFO] Initializing Dataloader.")
     # Transform and dataloader
-    print("Setting up Dataloader...")
-    transform = transforms.Compose([
-        ClampCH4(vmin=250, vmax=4000),
-        transforms.Normalize(
-            mean=[289.2123],
-            std=[109.5958]
-        )]
-    )
+    if args.model == "COVID_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[110.6390],
+                std=[183.9152]
+            )]
+        )
+    elif args.model == "CalCH4_v8":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[140.6399],
+                std=[237.5434]
+            )]
+        )
+    elif args.model == "Permian_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[100.2635],
+                std=[158.7060]
+            )]
+        )
 
     dataloader = torch.utils.data.DataLoader(
         FlightlineShiftStitch(
             args.flightline,
             transform=transform,
-            scale=32
+            scale=256
         ),
-        batch_size=8,
+        batch_size=args.batch * len(args.gpus),
         shuffle=False,
-        num_workers=4
+        num_workers=8
     )
+
+    print("[STEP] MODEL PREDICTION")
 
     # Run shift predictions
     allpred = []
-    for batch in tqdm(dataloader, desc="Predicting shifts"):
+    for batch in tqdm(dataloader, desc="FCN Pred"):
         inputs = batch.to(device)
         with torch.no_grad():
             preds = fcn(inputs)
@@ -122,19 +189,26 @@ if __name__ == "__main__":
             allpred += [x[1] for x in preds.cpu().detach().numpy()]
     allpred = np.array(allpred)
 
-    # Export for debug
-    #np.save("predstack.npy", allpred)
-
     # Stitch
-    print("Stitching shifts...")
-    display_x = rasterio.open(args.flightline).read(4).T
-    display_x = np.clip(display_x, 0, 4000)
-    stitched = stitch_stack(display_x.shape, allpred, scale=32)
+    print("[INFO] Stitching shifts.")
+    dataset = rasterio.open(args.flightline)
+    array = dataset.read(4)
+    allpred = stitch_stack(array.shape, allpred, scale=256)
+    allpred[array == -9999] = -9999
 
     # Save
-    fig, (ax1, ax2) = plt.subplots(nrows=2, figsize=(12,8))
-    ax1.imshow(display_x, vmin=0, vmax=4000)
-    ax2.imshow(stitched, vmin=0, vmax=1.0)
-    fig.savefig(f"{Path(args.flightline).stem}-pred.png")
+    print("[STEP] RESULT EXPORT")
+    with rasterio.Env():
+        profile = dataset.profile
+
+        profile.update(
+            dtype=rasterio.float32,
+            count=1,
+            compress='lzw'
+        )
+
+        print(f"[INFO] Saving to", op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"))
+        with rasterio.open(op.join(args.output, f"{Path(args.flightline).stem}_saliency.img"), 'w', **profile) as dst:
+            dst.write(allpred.astype(rasterio.float32), 1)
 
     print("Done!")
