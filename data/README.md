@@ -53,7 +53,23 @@ The following items are generated for each labeled CMF image:
 
 - `tiles256/[cmf_img]_tilemap.png`: A map of the same pixel dimensions as the CMF indicating locations of positive, negative and background tiles.
 - `tiles256/[cmf_img]_tiles.pdf`: A quicklook showing the RGB+CMF image (top) in context of the locations of positive, negative and background tiles (bottom).
-	
+
+### CMF Column Profiles 
+
+Path: `/localstore/ang/y[yy]/cmf/ch4/column_profiles`
+
+We detect CMF artifacts such as columnwise systematics by computing "column profiles" that capture summary statistics for the CMF pixels measured by each detector in the AVIRIS-NG FPA. Each column profile is a .csv file with 598 rows representing the 598 individual detectors in the FPA. Each row contains the following entries:
+
+- npix: total valid science pixels (i.e., positive + finite) in column 
+- med: median value of valid CMF enhancements in column
+- mad: median absolute deviation of valid CMF enhancements in column
+- p05: 5th percentile of valid CMF enhancements in column
+- p95: 95th percentile of valid CMF enhancements in column
+
+We also generate a quicklook image (`column_profiles/quicklooks`) for each CMF profile showing the pre-ortho RGB+CMF image (top panel); a plot of the column profile showing the (median,mad) of each of the 598 columns in the FPA (center panel); and a plot showing the percentage of valid CMF pixels used in each column for computing the summary statistics (bottom panel).
+
+<hr>
+
 <a name="foot1">[1]</a> We use the term "weakly labeled" because the candidate ROI pixel boundaries are not manually drawn by human experts. Rather, experts provide a single (latitude, longitude) location for each candidate. The ROI boundaries are computed based on the intensity of CMF enhancements adjacent to each candidate location.
 
 <a name="foot2">[2]</a> We currently use a minppmm threshold of 250 ppmm for high altitude flightlines (GSD in 8-10 meters), and 500 ppmm for low altitude flightlines with (GSD 3-6 meters).
