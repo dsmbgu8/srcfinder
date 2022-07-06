@@ -36,7 +36,7 @@ class FlightlineConvolve(torch.utils.data.Dataset):
         self.flightline = flightline
         self.transform = transform
 
-        x = np.expand_dims(rasterio.open(self.flightline).read(4).T, axis=0)
+        x = np.expand_dims(rasterio.open(self.flightline).read(4), axis=0)
         self.inshape = x.shape
         print(self.inshape)
 
@@ -161,19 +161,20 @@ if __name__ == "__main__":
 
     # Run shift predictions
     allpred = []
-    for batch in tqdm(dataloader, desc="Predicting shifts"):
+    for batch in tqdm(dataloader, desc="CNN Pred"):
         inputs = batch.to(device)
         with torch.no_grad():
             preds = model(inputs)
             preds = torch.nn.functional.softmax(preds, dim=1)
             allpred += [x[1] for x in preds.cpu().detach().numpy()]
+    allpred = np.array(allpred)
 
     # Save
     print("[STEP] RESULT EXPORT")
     dataset = rasterio.open(args.flightline)
     array = dataset.read(4)
 
-    allpred = np.array(allpred).reshape(array.shape)
+    allpred = allpred.reshape(array.shape)
     allpred[array == -9999] = -9999
 
     with rasterio.Env():
