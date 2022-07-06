@@ -10,7 +10,7 @@ Each orthorectified CH4 Columnwise Matched Filter (CMF) image is a georeferenced
 
 CMF NODATA pixels (w/ value -9999) either occur outside the boundaries of the captured scene extent or were not flagged as valid science pixels, and should be ignored. 
 	
-### CMF Label Images + Candidate/ROI Metadata 
+### CMF Label Images 
 
 Path: `/localstore/ang/y[yy]/cmf/ch4/ort/labels/latest`
 
@@ -21,14 +21,10 @@ We generate "weakly labeled" [[1]](#foot1) plume images for QCed flightlines by 
 - unlabeled pixels (rgb=<span style="color:#FFFFFF; background-color:#000000">black=[0,0,0]</span>). 
 
 Label images use their associated CMF product id as their file prefix with suffix `"_mask.png"` (e.g., `ang20200906t195820_ch4mf_v2y1_img_mask.png`). 
-	
-We also generate several metadata products to preserve the mapping between the CMF label images computed from the candidate locations in the plume list and the metadata associated with each candidate. 
 
-- `[cmf_img]_cid_meta.json`: mapping from candidate ids to plume list metadata. All metadata specified in plume list is captured here, in addition to details computed during the label generation processfor each candidate (e.g., label ROI bounding box, class label, area + major/minor axis lengths). 
-
-- `[cmf_img]_roilab.tif`: single channel int32 image coregistered with CMF image containing pixelwise ROI labels for all candidates.
-
-- `[cmf_img]_roilab2cid.json`: mapping from int32 labels in roilab to unique candidate ids. Note: each unique candidate id is represented by one or more (depending on candidate size + local CMF enhancements) unique ROI ids. 
+> ![](images/ang20190923t174142_ch4mf_v2x1_img_mask.png)
+> ![](images/ang20191023t142135_ch4mf_v2x1_img_mask.png)
+> Figure 1: example CMF label images showing the locations of plume candidates (red pixels) and false enhancements (cyan pixels)
 
 ### CMF Label Image Quicklooks 
 
@@ -41,6 +37,22 @@ We generate a pdf quicklook figure to facilitate easy inspection of the generate
 
 Circles with radii (50,300)m centered on the (latitude,longitude) provided for each QCed plume/false detection candidate are shown in both subplots to indicate the spatial range of pixels considered in generating each candidate's ROI boundaries. 
 
+> ![](images/ang20190923t174142_ch4mf_v2x1_img_cmflab.jpg)
+> Figure 2: CMF label image quicklook showing RGB+CMF overlay (top) + RGB+CMF+label overlay (bottom).
+ 
+### Candidate ROI Metadata 	
+
+Path: `/localstore/ang/y[yy]/cmf/ch4/ort/labels/latest`
+	
+We also generate several metadata products to preserve the mapping between the CMF label images computed from the candidate locations in the plume list and the metadata associated with each candidate. 
+
+- `[cmf_img]_cid_meta.json`: mapping from candidate ids to plume list metadata. All metadata specified in plume list is captured here, in addition to details computed during the label generation processfor each candidate (e.g., label ROI bounding box, class label, area + major/minor axis lengths). 
+
+- `[cmf_img]_roilab.tif`: single channel int32 image coregistered with CMF image containing pixelwise ROI labels for all candidates.
+
+- `[cmf_img]_roilab2cid.json`: mapping from int32 labels in roilab to unique candidate ids. Note: each unique candidate id is represented by one or more (depending on candidate size + local CMF enhancements) unique ROI ids. 
+ 
+ 
 ### CMF + Label Image Tiles 
 
 Path: `/localstore/ang/y[yy]/cmf/ch4/ort/labels/tiles256`
@@ -71,6 +83,9 @@ We detect CMF artifacts such as columnwise systematics by computing "column prof
 Path: `/localstore/ang/y[yy]/cmf/ch4/column_profiles/quicklooks`
 
 We also generate a quicklook image for each CMF profile showing the pre-ortho RGB+CMF image (top panel); a plot of the column profile showing the (median,mad) of each of the 598 columns in the FPA (center panel); and a plot showing the percentage of valid CMF pixels used in each column for computing the summary statistics (bottom panel).
+
+> ![](images/ang20200708t220821_ch4mf_v2y1_clip_column_stats.jpg)
+> Figure 3: CMF column profile quicklook showing RGB+CMF overlay (top); CMF profile plot (center); and valid pixel percentages (bottom).
 
 <hr>
 
