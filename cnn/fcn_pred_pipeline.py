@@ -38,7 +38,7 @@ class FlightlineShiftStitch(torch.utils.data.Dataset):
     
     def __init__(self, flightline, transform, scale=32):
         self.flightline = flightline
-        self.x = np.expand_dims(rasterio.open(self.flightline).read(4).T, axis=0)
+        self.x = np.expand_dims(rasterio.open(self.flightline).read(4), axis=0)
         self.transform = transform
         self.scale = scale
     
