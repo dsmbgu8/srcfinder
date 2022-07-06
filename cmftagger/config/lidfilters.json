@@ -1,0 +1,59 @@
+{
+    "Artifacts Near Plumes": {
+        "accept": [
+            "None",
+            "Same Column",
+            "Adjacent",
+            "Overlapping"
+        ],
+        "reject": [
+	]
+    },
+    "CMF Contrast": {
+        "accept": [
+            "Average",
+            "Low BGE",
+            "High BGE"
+        ],
+        "reject": [
+	]
+    },
+    "Cloud Cover": {
+        "accept": [
+            "Clear (<5% clouds)",
+	    "Mostly Clear (<25% clouds)"
+        ],
+        "reject": [
+            "Partly Cloudy (<50% clouds)",
+            "Mostly Cloudy (<70% clouds)",
+            "Overcast (>70% clouds)"
+	]
+    },
+    "Column Artifacts": {
+        "accept": [
+            "None",
+            "Minor"
+        ],
+        "reject": [
+            "Severe"
+	]
+    },
+    "Data Quality": {
+        "accept": [
+            "Average",
+            "High"
+        ],
+        "reject": [
+            "Low"
+	]
+    },
+    "Ortho Anomalies": {
+        "accept": [
+            "None",
+            "Minor"
+        ],
+        "reject": [
+            "Severe"
+	]
+    }
+}

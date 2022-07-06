@@ -1,0 +1,11 @@
+name: srcfinder
+channels:
+  - defaults
+dependencies:
+  - python=2.7.15
+  - numpy=1.14.3
+  - scipy=1.1.0
+  - scikit-learn=0.19.1
+  - pip=19.3.1
+  - pip:
+    - spectral==0.19

@@ -1,0 +1,10 @@
+.bk.statemsg {
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.bk.statemsgold {
+  background: #f0f0f0;
+  border-radius: 1px;
+  border: 1px black solid;
+}
