@@ -41,7 +41,7 @@ We generate a pdf quicklook figure to facilitate easy inspection of the generate
 
 Circles with radii (50,300)m centered on the (latitude,longitude) provided for each QCed plume/false detection candidate are shown in both subplots to indicate the spatial range of pixels considered in generating each candidate's ROI boundaries. 
 
-### CMF/Label Image Tiles 
+### CMF + Label Image Tiles 
 
 Path: `/localstore/ang/y[yy]/cmf/ch4/ort/labels/tiles256`
 
@@ -66,7 +66,11 @@ We detect CMF artifacts such as columnwise systematics by computing "column prof
 - p05: 5th percentile of valid CMF enhancements in column
 - p95: 95th percentile of valid CMF enhancements in column
 
-We also generate a quicklook image (`column_profiles/quicklooks`) for each CMF profile showing the pre-ortho RGB+CMF image (top panel); a plot of the column profile showing the (median,mad) of each of the 598 columns in the FPA (center panel); and a plot showing the percentage of valid CMF pixels used in each column for computing the summary statistics (bottom panel).
+### CMF Column Profile Quicklooks
+
+Path: `/localstore/ang/y[yy]/cmf/ch4/column_profiles/quicklooks`
+
+We also generate a quicklook image for each CMF profile showing the pre-ortho RGB+CMF image (top panel); a plot of the column profile showing the (median,mad) of each of the 598 columns in the FPA (center panel); and a plot showing the percentage of valid CMF pixels used in each column for computing the summary statistics (bottom panel).
 
 <hr>
 
