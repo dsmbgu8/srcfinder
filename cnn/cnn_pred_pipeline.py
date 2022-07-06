@@ -36,7 +36,7 @@ class FlightlineConvolve(torch.utils.data.Dataset):
         self.flightline = flightline
         self.transform = transform
 
-        x = np.expand_dims(rasterio.open(self.flightline).read(4).T, axis=0)
+        x = np.expand_dims(rasterio.open(self.flightline).read(4), axis=0)
         self.inshape = x.shape
         print(self.inshape)
 
