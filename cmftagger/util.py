@@ -35,7 +35,7 @@ from holoviews import opts, dim
 from skimage.measure import label as imlabel
 
 sys.path.append(os.path.split(__file__)[0]+'/..')
-from srcfinder_util import extrema, counts, labpng2tif
+from srcfinder_util import extrema, counts, labpng2tif, load_plumedf
 
 
 nonesel = '[none]'
@@ -267,28 +267,6 @@ def meters_to_rowcol(x,y,transform):
     # note: assumes (x,y) are in same projection as transform
     row,col = rio.transform.rowcol(transform, x, y)
     return row,col
-
-def load_plumedf(plumes_file,cnn_sheet,manualid_sheet):
-    cnndf = pd.read_excel(plumes_file,sheet_name=cnn_sheet)
-    cnndf.columns = cnndf.columns.str.replace('#','').str.strip()
-    manualdf = pd.read_excel(plumes_file,sheet_name=manualid_sheet)
-    manualdf.columns = manualdf.columns.str.replace('#','').str.strip()
-    manualdf.loc[:,evalcol] = ['FN']*len(manualdf)
-    plumedf = pd.concat([cnndf,manualdf],axis=0)
-    
-    #evalcol = plumedf.columns[0]
-    #cidcol = plumedf.columns[2]
-    labcats = ('FP', 'TP', 'FN')
-    ulabcats = plumedf[evalcol].unique()
-    if any([val not in labcats for val in ulabcats]):
-        print('unexpected labvals: "%s"'%str((ulabcats)))
-        raw_input()
-    plumedf[cidcol] = [cid.split('-')[-1] for cid in plumedf[cidcol].values]
-    plumedf[labcol] = [plumelab if isplumei else falselab
-                       for isplumei in np.isin(plumedf[evalcol].values,('TP','FN'))]
-
-    #plumedf = plumedf.sort_values(by=labcol,axis=0)
-    return plumedf
 
 def cmf_plumes(df,cmff,cmfxform):
     plumedf = contains_filter(df,cmff_to_lid(cmff),lidcol)

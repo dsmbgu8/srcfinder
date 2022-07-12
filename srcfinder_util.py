@@ -10,7 +10,7 @@ from os.path import expanduser
 from collections import OrderedDict
 
 from glob import glob
-
+import pandas as pd
 
 try:
     import gdal
@@ -119,6 +119,8 @@ hdfkw = dict(complevel=COMPLEVEL,complib=COMPLIB,mode='r')
 lidcol,cidcol = 'Line name','Candidate ID'
 latcol,loncol = 'Plume Latitude (deg)','Plume Longitude (deg)'
 labcol,xlscol = 'Class label','XLS file'
+
+evalcol = 'True_pos/false_pos'
 
 # labimg suffix
 labimgsuf = '_mask.png'
@@ -2037,6 +2039,46 @@ def iou(bb1,bb2,**kwargs):
     
     return iou
 
+def load_plumedf(plumes_file,cnn_sheet,manualid_sheet=None,
+                 truncated_cids=True,dedupcols=[]):
+    cnndf = pd.read_excel(plumes_file,sheet_name=cnn_sheet)
+    cnndf.columns = cnndf.columns.str.replace('#','').str.strip()
+    if manualid_sheet is not None:
+        manualdf = pd.read_excel(plumes_file,sheet_name=manualid_sheet)
+        manualdf.columns = manualdf.columns.str.replace('#','').str.strip()
+        manualdf.loc[:,evalcol] = ['FN']*len(manualdf)
+        plumedf = pd.concat([cnndf,manualdf],axis=0)
+    else:
+        plumedf = cnndf
+        
+    #evalcol = plumedf.columns[0]
+    #cidcol = plumedf.columns[2]
+    if evalcol in plumedf:
+        labcats = ('FP', 'TP', 'FN')
+        ulabcats = plumedf[evalcol].unique()
+        if any([val not in labcats for val in ulabcats]):
+            print('unexpected labvals: "%s"'%str((ulabcats)))
+            raw_input()
+            plumedf[labcol] = [plumelab if isplumei else falselab
+                               for isplumei in np.isin(plumedf[evalcol].values,('TP','FN'))]            
+
+    if cidcol in plumedf:
+        plumedf[cidcol] = [cid.split('-')[-1] if isinstance(cid,str) else str(cid)
+                           for cid in plumedf[cidcol].values]
+        if not truncated_cids:
+            plumedf[cidcol] = [lid+'-'+cid for lid,cid in plumedf[[lidcol,cidcol]].values]
+
+
+    # remove rows in same flightline with same (eval_label,lat,lon)
+    if len(dedupcols) != 0:
+        nplumes = plumedf.shape[0]
+        plumedf = plumedf.loc[~plumedf.duplicated(keep='first',subset=dedupcols)]
+        if nplumes != plumedf.shape[0]:
+            print(f'Warning: removed {nplumes-plumedf.shape[0]} duplicates from plumedf')
+
+            
+    #plumedf = plumedf.sort_values(by=labcol,axis=0)
+    return plumedf
 
 if __name__ == '__main__':
     import pylab as pl
