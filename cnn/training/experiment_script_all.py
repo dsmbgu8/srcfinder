@@ -4,33 +4,33 @@ v1: 2021-11-07 jakelee
 v2: 2021-11-14 jakelee
 v3: 2022-01-10 jakelee
 v4: 2022-04-10 jakelee
+v5: 2022-08-18 jakelee
 
 Jake Lee, jakelee, jake.h.lee@jpl.nasa.gov
 """
 import sys
 import os
-import os.path as op
-from pathlib import Path
-import csv
+import os.path  as op
+from pathlib    import Path
+from tqdm       import tqdm
+from datetime   import datetime
 import argparse
-from datetime import datetime
-from tqdm import tqdm
 import time
-
-import torch
-import torch.nn     as nn
-from torch.nn       import CrossEntropyLoss
-from torchvision    import transforms
-from torch.optim    import SGD
-
-sys.path.append('../')
-from archs.googlenet1 import googlenet
+import csv
 
 from sklearn.metrics import precision_recall_curve, classification_report
 import matplotlib.pyplot as plt
 import numpy as np
 import PIL
 import rasterio
+
+import torch
+from torch.nn       import CrossEntropyLoss
+from torchvision    import transforms
+from torch.optim    import SGD
+
+sys.path.append('../')
+from archs.googlenet1 import googlenet
 
 sys.path.append('./sam')
 from sam import SAM
@@ -39,7 +39,7 @@ from example.utility.step_lr import StepLR
 
 
 class ClampMethaneTile(object):
-    """ Preprocessing step for methane match filter tiles
+    """ Preprocessing transform for methane match filter tiles
 
     Parameters
     ----------
@@ -73,6 +73,7 @@ class ClampMethaneTile(object):
         # We only expect 1 or 4 channels (CH4 or RGB+CH4)
         assert img.shape[0] == 1 or img.shape[0] == 4
 
+        # Clip values accordingly
         if img.shape[0] == 1:
             return torch.clamp(img, self.ch4min, self.ch4max)
         elif img.shape[0] == 4:
@@ -85,9 +86,16 @@ class ClampMethaneTile(object):
 
 class TiledDatasetClass1Ch(torch.utils.data.Dataset):
     """ Classification dataset only using the methane channel
-    
-    Usage:
-    TiledDatasetSeg1Ch([[path, label], [path, label], ...], ...)
+
+    Parameters
+    ----------
+    dataroot: str
+        Directory path to campaign dataset
+    datacsv: list
+        List of [relative tile path, label] 
+        tilepath is relative to dataroot, label is -1, 0, or 1
+    transform: obj
+        torchvision transform object
     """
 
     def __init__(self, dataroot, datacsv, transform):
@@ -101,26 +109,31 @@ class TiledDatasetClass1Ch(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         # Absolute path to image
         x_path = self.datacsv[idx][0]
+
         # Correct absolute path to relative path
+        # No effect if already relative path
         x_path = op.join(self.dataroot, *Path(x_path).parts[-3:])
 
         # 1/0 label (-1 is 0)
         y = 1 if int(self.datacsv[idx][1]) == 1 else 0
 
+        # Open tile and adjust dimension for batching
         x = rasterio.open(x_path).read(4)
         x = np.expand_dims(x, axis=0)
 
+        # Apply data transformations
         x = torch.as_tensor(x, dtype=torch.float)
         if self.transform is not None:
             x = self.transform(x)
 
+        # Return input, label pair
         return (x, y)
 
 def get_augment(mean, std, augment="default", crop=256):
     """Define dataset augmentation for high-resolution data"""
 
     if augment == "augA" or augment == "default":
-        # no aug
+        # No augmentation, only standardization
         transform = transforms.Compose([
             ClampMethaneTile(ch4min=0, ch4max=4000, rgbmin=0, rgbmax=20),
             transforms.CenterCrop(crop),
@@ -130,7 +143,7 @@ def get_augment(mean, std, augment="default", crop=256):
             )
         ])
     elif augment == "augB":
-        # flip aug
+        # Random horizontal and vertical flipping
         transform = transforms.Compose([
             ClampMethaneTile(ch4min=0, ch4max=4000, rgbmin=0, rgbmax=20),
             transforms.CenterCrop(crop),
@@ -142,7 +155,7 @@ def get_augment(mean, std, augment="default", crop=256):
             transforms.RandomVerticalFlip(p=0.5)
         ])
     elif augment == "augC":
-        # affine aug
+        # Flipping and affine rotations and translations
         transform = transforms.Compose([
             ClampMethaneTile(ch4min=0, ch4max=4000, rgbmin=0, rgbmax=20),
             transforms.CenterCrop(crop),
@@ -258,7 +271,7 @@ if __name__ == "__main__":
 
 
     ## Set up output directories and files
-    expname = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{args.campaign}_{args.augment}_{'4ch' if args.use_rgb else '1ch'}_{'all' if args.train_all else 'train'}_{args.crop}"
+    expname = f"{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}_{args.campaign}_{args.augment}_{'all' if args.train_all else 'train'}_{args.crop}"
 
     outdir = op.join(args.outroot, expname)
     if not op.isdir(outdir):
@@ -343,12 +356,10 @@ if __name__ == "__main__":
                 # second forward-backward step
                 disable_running_stats(model)
                 ce_loss(model(inputs).logits, targets).mean().backward()
-                # ce_loss(model(inputs), targets).mean().backward()
                 optimizer.second_step(zero_grad=True)
             else:
                 optimizer.zero_grad()
                 predictions = model(inputs).logits
-                # predictions = model(inputs)
                 loss = ce_loss(predictions, targets)
                 loss.backward()
                 optimizer.step()
