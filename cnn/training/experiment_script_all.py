@@ -244,7 +244,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a classification model on tiled methane data.")
 
     parser.add_argument('dataroot',         help="Directory path to dataset root")
-    parser.add_argument('campaign',         choices=["COVID_v8", "CalCH4_v8", "COVID_v8_30m", "CalCH4_v8_30m", "COVID_QC", "COVID_QC_30m", "Permian_QC"],
+    parser.add_argument('campaign',         choices=["CalCH4_v8", "COVID_QC", "Permian_QC"],
                                             help="Campaign to train & test on")
     parser.add_argument('--lr',             type=float,
                                             help="Learning rate",
