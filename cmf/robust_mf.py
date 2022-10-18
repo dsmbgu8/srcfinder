@@ -1,12 +1,9 @@
-# Brian D. Bue
-# David R. Thompson
-# Copyright 2017, by the California Institute of Technology. ALL RIGHTS 
-# RESERVED. United States Government Sponsorship acknowledged. Any commercial 
-# use must be negotiated with the Office of Technology Transfer at the 
-# California Institute of Technology.  This software is controlled under the 
-# U.S. Export Regulations and may not be released to foreign persons without 
-# export authorization, e.g., a license, license exception or exemption.
-
+# Credit 2017
+# Brian D. Bue (brian.d.bue@jpl.nasa.gov)
+# David R. Thompson (david.r.thompson@jpl.nasa.gov)
+#
+# License: Apache 2.0 (http://www.apache.org/licenses/)
+#
 
 
 
