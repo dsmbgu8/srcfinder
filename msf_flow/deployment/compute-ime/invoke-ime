@@ -1,0 +1,44 @@
+import json
+import boto3
+from datetime import datetime
+
+def lambda_handler(event, context):
+    bucket = event['Records'][0]["s3"]["bucket"]["name"]
+    key = event['Records'][0]["s3"]["object"]["key"]  # 20200909thh:mm:ss-plume-list.csv
+    # ang20191027t175950_ch4mfm_v2x1_img_xpv2_minsal0p65_minppmm250p0.xlsx
+    fname = key.split('/')[-1]
+    conf = fname.split('_')
+    # fl = conf[0]
+    calids = conf[2]
+    cmfsuf = '_'.join(conf[1:4])
+
+    client = boto3.client('batch')
+
+    now = datetime.strftime(datetime.utcnow(), "%Y%m%dT%H%M%SZ")
+    job_name = 'compute-ime-{}'.format(now)
+    job_queue = 'arn:aws:batch:us-west-2:510343621499:job-queue/m2af-job-queue'
+    job_definition = 'msf-flow'
+    parameters = {}
+    parameters['CMF_DIR'] = 's3://bucket/data/cmf/ch4/ort/'
+    parameters['CALIDS'] = calids
+    parameters['CMFSUF'] = cmfsuf
+    parameters['PPMMTHR'] = '1500'
+    parameters['PPMMMAX'] = '4000'
+    parameters['FETCHMAX'] = '150'
+    parameters['MERGEDISTS'] = '10 20 50'
+    parameters['MINAREA'] = '9'
+    parameters['OUT_DIR'] = 's3://bucket/data/cmf/ch4/ort/plumes/ch4mfm_v2x1_img_detections/ime_minppmm1500/'
+    parameters['XLS_FILE'] = 's3://{}/{}'.format(bucket, key)
+    parameters['SHEET_NAME'] = 'Plume_List'
+
+    response = client.submit_job(
+        jobDefinition=job_definition,
+        jobName=job_name,
+        jobQueue=job_queue,
+        parameters=parameters
+    )
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps(response)
+    }

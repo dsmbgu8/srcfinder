@@ -1,0 +1,31 @@
+# CEDAS dataset configuration file
+#
+# The configuration parameters in this file are used by the CEDAS
+# automatic data harvesters to resolve paths to a dataset on a remote
+# hosting site and to indicate local naming conventions for the files.
+#
+# In the filename template settings the following substrings may be used to
+# indicate date- and time-specific string substitutions as follows:
+#
+#   %Y : 4-digit year in {0000, 0001, ...} (example: 2019)
+#   %m : 2-digit month in {01, 02, ..., 12}
+#   %d : 2-digit day of month in {01, 02, ...}
+#   %H : 2-digit hour in {00, 01, ..., 23}
+#   %M : 2-digit minute in {00, 01, ..., 59}
+#   %S : 2-digit second in {00, 01, ..., 59}
+#
+# For the time resolution setting, use an integer number of one of the
+# following units:
+#
+#   s : seconds
+#   m : minutes
+#   h : hours
+#   d : days
+#   w : weeks
+#
+# Copy/rename this file to /path/to/your/dataset/directory/.cedas/dataset.yaml
+# and edit the lines below for your dataset.
+#
+url_template: "https://pando-rgw01.chpc.utah.edu/hrrr/sfc/%Y%m%d/hrrr.t%Hz.wrfsfcf00.grib2"
+local_path_template: "%Y%m%d/hrrr.%Y%m%d%H.wrfsfcf00.grib2"
+time_res: 1h

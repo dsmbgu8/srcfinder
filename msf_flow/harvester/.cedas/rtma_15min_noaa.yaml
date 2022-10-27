@@ -1,0 +1,5 @@
+url_template: "https://www.ftp.ncep.noaa.gov/data/nccf/com/rtma/prod/rtma2p5_ru.%Y%m%d/rtma2p5_ru.t%H%Mz.2dvaranl_ndfd.grb2"
+local_path_template: "%Y%m%d/rtma2p5_ru.%Y%m%d%H%Mz.2dvaranl_ndfd.grib2"
+time_res: 15m
+target_bucket_name: "bucket"
+target_bucket_folder: "rtma_15min_noaa"

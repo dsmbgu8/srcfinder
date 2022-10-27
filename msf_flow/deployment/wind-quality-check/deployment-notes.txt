@@ -1,0 +1,9 @@
+requires utils/logger.py file
+unusual Docker install:
+  - pygrib needs to built locally with cmake3 and eccodes dependencies
+lambda setup:
+  - use pygrib lambda layer (includes numpy and pyproj dependencies) with python3.7
+  - make sure to set lambda function environtment variable:
+  LD_LIBRARY_PATH=/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib:/opt/python/lib/python3.7/site-packages/eccodes-2.17.0/lib
+  ECCODES_DEFINITION_PATH=/opt/python/lib/python3.7/site-packages/eccodes-2.17.0/share/eccodes/definitions
+  - copy code into the browser UI or as lambda function with layer 	arn:aws:lambda:us-west-2:510343621499:layer:pygrib:3
