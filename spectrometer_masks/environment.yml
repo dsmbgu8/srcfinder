@@ -1,0 +1,10 @@
+name: spectrometer_masks
+channels:
+  - defaults
+dependencies:
+  - python=3.6.5
+  - numpy=1.18.5
+  - pip=20.1.1
+  - pip:
+    - spectral==0.21
+    - scikit-image==0.17.2
