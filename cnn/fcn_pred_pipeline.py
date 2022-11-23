@@ -165,6 +165,14 @@ if __name__ == "__main__":
                 std=[158.7060]
             )]
         )
+    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+        transform = transforms.Compose([
+            ClampCH4(vmin=0, vmax=4000),
+            transforms.Normalize(
+                mean=[115.0],
+                std=[190.0]
+            )]
+        )
 
     dataloader = torch.utils.data.DataLoader(
         FlightlineShiftStitch(
