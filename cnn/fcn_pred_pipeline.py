@@ -80,13 +80,13 @@ if __name__ == "__main__":
                                             type=str)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
                                             default="COVID_QC",
-                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "CalCh4_v8+COVID_QC+Permian_QC"])
+                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "multi_256", "multi_64"])
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
                                             type=int)
     parser.add_argument('--batch', '-b',    help="Batch size per device.",
-                                            default=32,
+                                            default=8,
                                             type=int)
     parser.add_argument('--output', '-o',   help="Output directory for generated saliency maps.",
                                             default=".",
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                 std=[158.7060]
             )]
         )
-    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+    elif "multi" in args.model:
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
             transforms.Normalize(
@@ -178,11 +178,11 @@ if __name__ == "__main__":
         FlightlineShiftStitch(
             args.flightline,
             transform=transform,
-            scale=256
+            scale=32
         ),
         batch_size=args.batch * len(args.gpus),
         shuffle=False,
-        num_workers=8
+        num_workers=0
     )
 
     print("[STEP] MODEL PREDICTION")
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     print("[INFO] Stitching shifts.")
     dataset = rasterio.open(args.flightline)
     array = dataset.read(4)
-    allpred = stitch_stack(array.shape, allpred, scale=256)
+    allpred = stitch_stack(array.shape, allpred, scale=32)
     allpred[array == -9999] = -9999
 
     # Save

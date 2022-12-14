@@ -2,6 +2,20 @@
 
 This directory contains pipelines for deep learning detection of methane plumes.
 
+## Models
+
+- `models/COVID_QC.pt`
+  - Model trained on a curated AVIRIS-NG California campaign from 2020
+- `models/CalCH4_v8.pt`
+  - Model trained on a curated AVIRIS-NG California campaign from 2018
+- `models/Permian_QC.pt`
+  - Model trained on a curated AVIRIS-NG Texas campaign from 2019
+- `models/multi_256.pt`
+  - Model trained on the three models above
+- `models/multi_64.pt`
+  - Models trained on the three models above with a 64x64 tile size,
+    specifically for the FCN.
+
 ## CNN Pipeline
 
 ```
@@ -127,8 +141,8 @@ $ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID
 ## FCN Pipeline (Experimental)
 
 ```
-$ python fcn_pred_pipeline.py -h
-usage: fcn_pred_pipeline.py [-h] [--model {COVID_QC,CalCH4_v8,Permian_QC}]
+usage: fcn_pred_pipeline.py [-h]
+                            [--model {COVID_QC,CalCH4_v8,Permian_QC,multi_256,multi_64}]
                             [--gpus GPUS [GPUS ...]] [--batch BATCH]
                             [--output OUTPUT]
                             flightline
@@ -140,7 +154,7 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  --model {COVID_QC,CalCH4_v8,Permian_QC}, -m {COVID_QC,CalCH4_v8,Permian_QC}
+  --model {COVID_QC,CalCH4_v8,Permian_QC,multi_256,multi_64}, -m {COVID_QC,CalCH4_v8,Permian_QC,multi_256,multi_64}
                         Model to use for prediction.
   --gpus GPUS [GPUS ...], -g GPUS [GPUS ...]
                         GPU devices for inference. -1 for CPU.
@@ -158,12 +172,11 @@ into an FCN and using shift-and-stitch as described in
 
 It is not guaranteed to work better than the CNN pipeline; in fact, preliminary
 work suggests the original CNN should be trained on a smaller tile size
-(e.g. 64x64) to prevent artifacts from appearing. This smaller tile size may
-also impact compute performance.
+(e.g. 64x64) to prevent artifacts from appearing. This model is provided.
 
-**Therefore, this pipeline is only provided as a demonstration of this method's hardware and compute requirements, which are different from that of the CNN.**
+**This pipeline is only provided as a demonstration of this method's hardware and compute requirements, which are different from that of the CNN.**
 
-**NOTE: This method involves loading the entire flightline into the VRAM of the GPU. For long flightlines, this may not be possible, event at batch size of 1. Either crop the flightline to be smaller or use a GPU with more VRAM.**
+**NOTE: This method involves loading the entire flightline into the VRAM of the GPU. For long flightlines, this may not be possible, even at batch size of 1. Either crop the flightline to be smaller or use a GPU with more VRAM.**
 
 ### Dependencies
 
@@ -176,64 +189,64 @@ Same as the CNN Pipeline.
 #### CPU Inference
 
 ```bash
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g -1 -b 8
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 8
 [STEP] MODEL INITIALIZATION
 [INFO] Finding model weightpath.
-[INFO] Found /home/jakelee/2022/srcfinder/cnn/models/COVID_QC.pt.
+[INFO] Found /home/jakelee/2022/srcfinder/cnn/models/multi_64.pt.
 [INFO] Initializing pytorch device.
 [INFO] Loading model.
 [INFO] Converting CNN to FCN.
 [INFO] Initializing Dataloader.
 [STEP] MODEL PREDICTION
 ...
-// ETA 7.5 hours
+// ETA 4 minutes 50 seconds
 ```
 
 ```bash
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g -1 -b 32
-// ETA 7 hours
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 32
+// ETA 4 minutes 50 seconds
 ```
 
 #### Single GPU Inference
 
 ```bash
 // Single GPU inference with batch size 1
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 1
-// ETA ~1.7 hours
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 1
+// ETA 1 minute 20 seconds
 ```
 
 ```bash
 // Single GPU inference with batch size 4
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 4
-// ETA ~1.7 hours
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 4
+// ETA 1 minute 15 seconds
 ```
 
 ```bash
 // Single GPU inference with batch size 8
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 -b 8
-// ETA ~1.7 hours
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 8
+// ETA 1 minute 10 seconds
 ```
 
-Note how this pipeline doesn't improve on a single GPU with larger batch sizes.
+Note how this pipeline doesn't improve much on a single GPU with larger batch sizes.
 
 #### Quad GPU Inference
 
 ```bash
 // Quad-GPU inference with batch size 1 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 1
-// ETA ~2.2 hours
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 1
+// ETA 2 minutes
 ```
 
 ```bash
 // Quad-GPU inference with batch size 4 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 4
-// ETA ~1 hour
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 4
+// ETA 55 seconds
 ```
 
 ```bash
 // Quad-GPU inference with batch size 8 each
-$ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m COVID_QC -g 0 1 2 3 -b 8
-// ETA ~0.75 hours
+$ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 8
+// ETA 50 seconds
 ```
 
 However, with multiple GPUs, increasing batch sizes does provide an improvement.
@@ -275,16 +288,16 @@ in the future.
 
 ### FCN Pipeline Performance
 
-| CPU + GPU | GPUs | batch | Runtime (hrs) |
+| CPU + GPU | GPUs | batch | Runtime       |
 | --------  | ---- | ----- | ------------- |
-| 32 + M60  | -1   | 8     | 8             |
-| 32 + M60  | -1   | 32    | 7.5           |
-| 32 + M60  | 0    | 1     | 1.7           |
-| 32 + M60  | 0    | 4     | 1.7           |
-| 32 + M60  | 0    | 8     | 1.7           |
-| 32 + P4   | 0    | 8     | 1.5           |
-| 32 + M60  | 0123 | 1     | 2.2           |
-| 32 + M60  | 0123 | 4     | 1             |
-| 32 + M60  | 0123 | 8     | 0.75          |
+| 32 + M60  | -1   | 8     | 4 min 50 sec  |
+| 32 + M60  | -1   | 32    | 4 min 50 sec  |
+| 32 + M60  | 0    | 1     | 1 min 20 sec  |
+| 32 + M60  | 0    | 4     | 1 min 15 sec  |
+| 32 + M60  | 0    | 8     | 1 min 10 sec  |
+| 32 + P4   | 0    | 8     | 1 min         |
+| 32 + M60  | 0123 | 1     | 2 min         |
+| 32 + M60  | 0123 | 4     | 55 sec        |
+| 32 + M60  | 0123 | 8     | 50 sec        |
 
 -1 indicates only using the CPUs, and 0+ indicates GPU devices.

@@ -32,19 +32,19 @@ class ClampCH4(object):
 class FlightlineConvolve(torch.utils.data.Dataset):
     """ Single flightline for exhaustive CNN convolution"""
 
-    def __init__(self, flightline, transform, dim=256):
+    def __init__(self, flightline, transform, dim=256, device=torch.device('cpu')):
         self.flightline = flightline
         self.transform = transform
 
         x = np.expand_dims(rasterio.open(self.flightline).read(1), axis=0)
         self.inshape = x.shape
-        print(self.inshape)
 
         x = torch.as_tensor(x, dtype=torch.float)
         if self.transform is not None:
             x = self.transform(x)
         self.x = transforms.Pad([dim//2, dim//2, (dim//2)-1, (dim//2)-1], fill=0, padding_mode='constant')(x)
 
+        self.x = self.x.to(device)
         self.dim = dim
 
     def __len__(self):
@@ -54,7 +54,8 @@ class FlightlineConvolve(torch.utils.data.Dataset):
         row = idx // self.inshape[2]
         col = idx % self.inshape[2]
 
-        return self.x[:,row:row+self.dim, col:col+self.dim]
+        out = self.x[:,row:row+self.dim, col:col+self.dim]
+        return out
 
         
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
                                             type=str)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
                                             default="COVID_QC",
-                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "CalCh4_v8+COVID_QC+Permian_QC"])
+                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "multi_256", "multi_64"])
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
@@ -146,7 +147,7 @@ if __name__ == "__main__":
                 std=[158.7060]
             )]
         )
-    elif args.model == "CalCh4_v8+COVID_QC+Permian_QC":
+    elif 'multi' in args.model:
         transform = transforms.Compose([
             ClampCH4(vmin=0, vmax=4000),
             transforms.Normalize(
@@ -159,10 +160,11 @@ if __name__ == "__main__":
         FlightlineConvolve(
             args.flightline,
             transform=transform,
+            device=device
         ),
         batch_size=args.batch * len(args.gpus),
         shuffle=False,
-        num_workers=8
+        num_workers=0
     )
 
     print("[STEP] MODEL PREDICTION")
@@ -170,7 +172,8 @@ if __name__ == "__main__":
     # Run shift predictions
     allpred = []
     for batch in tqdm(dataloader, desc="CNN Pred"):
-        inputs = batch.to(device)
+        #inputs = batch.to(device)
+        inputs = batch
         with torch.no_grad():
             preds = model(inputs)
             preds = torch.nn.functional.softmax(preds, dim=1)
