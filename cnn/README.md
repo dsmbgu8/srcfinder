@@ -189,7 +189,7 @@ Same as the CNN Pipeline.
 #### CPU Inference
 
 ```bash
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 8
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 8 -n 4
 [STEP] MODEL INITIALIZATION
 [INFO] Finding model weightpath.
 [INFO] Found /home/jakelee/2022/srcfinder/cnn/models/multi_64.pt.
@@ -203,7 +203,7 @@ $ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi
 ```
 
 ```bash
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 32
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g -1 -b 32 -n 4
 // ETA 4 minutes 50 seconds
 ```
 
@@ -211,19 +211,19 @@ $ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi
 
 ```bash
 // Single GPU inference with batch size 1
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 1
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 1 -n 4
 // ETA 1 minute 20 seconds
 ```
 
 ```bash
 // Single GPU inference with batch size 4
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 4
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 4 -n 4
 // ETA 1 minute 15 seconds
 ```
 
 ```bash
 // Single GPU inference with batch size 8
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 8
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 -b 8 -n 4
 // ETA 1 minute 10 seconds
 ```
 
@@ -233,19 +233,19 @@ Note how this pipeline doesn't improve much on a single GPU with larger batch si
 
 ```bash
 // Quad-GPU inference with batch size 1 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 1
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 1 -n 4
 // ETA 2 minutes
 ```
 
 ```bash
 // Quad-GPU inference with batch size 4 each
-$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 4
+$ python fcn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 4 -n 4
 // ETA 55 seconds
 ```
 
 ```bash
 // Quad-GPU inference with batch size 8 each
-$ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 8
+$ python cnn_pred_pipeline.py samples/ang20200924t211102_ch4mf_v2y1_img -m multi_64 -g 0 1 2 3 -b 8 -n 4
 // ETA 50 seconds
 ```
 

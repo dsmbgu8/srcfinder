@@ -36,9 +36,9 @@ class FlightlineShiftStitch(torch.utils.data.Dataset):
     FlightlineShiftStitch(flightlinepath, transform, scale)
     """
     
-    def __init__(self, flightline, transform, scale=32):
+    def __init__(self, flightline, transform, scale=32, band=1):
         self.flightline = flightline
-        self.x = np.expand_dims(rasterio.open(self.flightline).read(4), axis=0)
+        self.x = np.expand_dims(rasterio.open(self.flightline).read(band), axis=0)
         self.transform = transform
         self.scale = scale
     
@@ -78,6 +78,9 @@ if __name__ == "__main__":
 
     parser.add_argument('flightline',       help="Filepaths to flightline ENVI IMG.",
                                             type=str)
+    parser.add_argument('--band', '-n',     help="Band to read if multiband",
+                                            default=1,
+                                            type=int)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
                                             default="COVID_QC",
                                             choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "multi_256", "multi_64"])
@@ -178,7 +181,8 @@ if __name__ == "__main__":
         FlightlineShiftStitch(
             args.flightline,
             transform=transform,
-            scale=32
+            scale=32,
+            band=args.band
         ),
         batch_size=args.batch * len(args.gpus),
         shuffle=False,
@@ -200,7 +204,7 @@ if __name__ == "__main__":
     # Stitch
     print("[INFO] Stitching shifts.")
     dataset = rasterio.open(args.flightline)
-    array = dataset.read(4)
+    array = dataset.read(args.band)
     allpred = stitch_stack(array.shape, allpred, scale=32)
     allpred[array == -9999] = -9999
 
