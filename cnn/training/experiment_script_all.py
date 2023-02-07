@@ -227,6 +227,14 @@ def build_dataloader(dataroot, campaign=None, augment="default", mode="train", s
         # NOTE: (0, 4000) on train
         transform = get_augment([100.2635], [158.7060], augment, crop)
         dataset = TiledDatasetClass1Ch(op.join(dataroot, campaign), datarows, transform)
+    elif campaign == "GAO_Denver_QC":
+        # NOTE: (0, 4000) on train
+        transform = get_augment([134.0613], [216.1759], augment, crop)
+        dataset = TiledDatasetClass1Ch(op.join(dataroot, campaign), datarows, transform)
+    elif campaign == "GAO_Penn_ALL":
+        # NOTE: (0, 4000) on train
+        transform = get_augment([329.4639], [519.1670], augment, crop)
+        dataset = TiledDatasetClass1Ch(op.join(dataroot, campaign), datarows, transform)
     else:
         raise Exception(f"Undefined 1ch campaign: {campaign}")
 
@@ -244,7 +252,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a classification model on tiled methane data.")
 
     parser.add_argument('dataroot',         help="Directory path to dataset root")
-    parser.add_argument('campaign',         choices=["CalCH4_v8", "COVID_QC", "Permian_QC"],
+    parser.add_argument('campaign',         choices=["CalCH4_v8", "COVID_QC", "Permian_QC", "GAO_Denver_QC", "GAO_Penn_ALL"],
                                             help="Campaign to train & test on")
     parser.add_argument('--lr',             type=float,
                                             help="Learning rate",
