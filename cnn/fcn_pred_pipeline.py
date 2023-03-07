@@ -38,36 +38,60 @@ class FlightlineShiftStitch(torch.utils.data.Dataset):
     
     def __init__(self, flightline, transform, scale=32, band=1):
         self.flightline = flightline
-        self.x = np.expand_dims(rasterio.open(self.flightline).read(band), axis=0)
         self.transform = transform
         self.scale = scale
-    
+
+        self.x = rasterio.open(self.flightline).read(band)
+        self.x_shape = self.x.shape
+
+        pad0 = scale - (self.x_shape[0] % self.scale)
+        pad1 = scale - (self.x_shape[1] % self.scale)
+
+        # Left Right Top Bottom
+        self.div_pad = nn.ZeroPad2d((0, pad1, 0, pad0))
+
     def __len__(self):
         return self.scale ** 2
     
-    def __getitem__(self, idx):        
-        # Calculate padding for this index
+    def __getitem__(self, idx):
+        # Calculate shift-and-stitch padding for this index
         top = idx // self.scale
         left = idx % self.scale
         
-        t = torch.as_tensor(self.x, dtype=torch.float)
+        t = torch.as_tensor(self.x, dtype=torch.float).unsqueeze(0)
         if self.transform is not None:
             t = self.transform(t)
-        
-        t = transforms.Pad([self.scale-1-left, self.scale-1-top, left, top], fill=0, padding_mode='constant')(t)
-        
-        return t 
 
-def stitch_stack(fl_shape, predstack, scale=32):
-    stitched = np.zeros(shape=fl_shape)
+        # Divisibility padding
+        t = self.div_pad(t)
+
+        # Shift-and-Stitch padding
+        # Left Right Top Bottom
+        t = nn.ZeroPad2d((left, self.scale-left, top, self.scale-top))(t)
+        return (top, left), t 
+
+def stitch_stack(fl_shape, ts, ls, predstack, scale=32):
+    """ Interlace shifted outputs
+
+    fl_shape: Shape of original flightline for cropping
+    ts: List of top shifts
+    ls: List of left shifts
+    predstacK: Stack of shifted predictions
+    scale: Downscale factor of model, default 32.
+    """
+    # Storage for final stitched output
+    stitched = np.zeros(shape=(predstack.shape[1]*scale, predstack.shape[2]*scale))
     
-    for i in range(scale**2):
-        top = i // scale
-        left = i % scale
-        
-        inshape = stitched[top::scale, left::scale].shape
-        stitched[top::scale, left::scale] = predstack[i, :inshape[0], :inshape[1]]
-    
+    # Iterate through shifts and outputs
+    for i in range(predstack.shape[0]):
+        top = ts[i]
+        left = ls[i]
+        # Save them to corresponding strided pixels
+        stitched[scale-top-1::scale, scale-left-1::scale] = predstack[i]
+
+    # Crop the center
+    stitched = stitched[scale//2:fl_shape[0]+scale//2, scale//2:fl_shape[1]+scale//2]
+
     return stitched
 
 
@@ -81,9 +105,12 @@ if __name__ == "__main__":
     parser.add_argument('--band', '-n',     help="Band to read if multiband",
                                             default=1,
                                             type=int)
+    parser.add_argument('--scale', '-s',    help="Downscaling factor of the model",
+                                            default=32,
+                                            type=int)
     parser.add_argument('--model', '-m',    help="Model to use for prediction.",
-                                            default="COVID_QC",
-                                            choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "multi_256", "multi_64"])
+                                           default="COVID_QC",
+                                           choices=["COVID_QC", "CalCH4_v8", "Permian_QC", "multi_256", "multi_64"])
     parser.add_argument('--gpus', '-g',     help="GPU devices for inference. -1 for CPU.",
                                             nargs='+',
                                             default=[-1],
@@ -181,7 +208,7 @@ if __name__ == "__main__":
         FlightlineShiftStitch(
             args.flightline,
             transform=transform,
-            scale=32,
+            scale=args.scale,
             band=args.band
         ),
         batch_size=args.batch * len(args.gpus),
@@ -192,20 +219,26 @@ if __name__ == "__main__":
     print("[STEP] MODEL PREDICTION")
 
     # Run shift predictions
-    allpred = []
-    for batch in tqdm(dataloader, desc="FCN Pred"):
+    allpred = None
+    ts = []
+    ls = []
+    for (t, l), batch in tqdm(dataloader, desc="FCN Pred"):
         inputs = batch.to(device)
         with torch.no_grad():
             preds = fcn(inputs)
             preds = torch.nn.functional.softmax(preds, dim=1)
-            allpred += [x[1] for x in preds.cpu().detach().numpy()]
-    allpred = np.array(allpred)
+            if allpred is None:
+                allpred = preds.cpu().detach().numpy()[:,1,:,:]
+            else:
+                allpred = np.concatenate((allpred, preds.cpu().detach().numpy()[:,1,:,:]), axis=0)
+            ts += t
+            ls += l
 
     # Stitch
     print("[INFO] Stitching shifts.")
     dataset = rasterio.open(args.flightline)
     array = dataset.read(args.band)
-    allpred = stitch_stack(array.shape, allpred, scale=32)
+    allpred = stitch_stack(array.shape, ts, ls, allpred, scale=args.scale)
     allpred[array == -9999] = -9999
 
     # Save
